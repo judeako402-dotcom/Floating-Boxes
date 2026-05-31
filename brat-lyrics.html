@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earrings — Malcolm Todd</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; background: #050505; font-family: Arial, Helvetica, sans-serif; }
+#app {
+  width: 100vw; height: 100vh; position: relative; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, #111 0%, #050505 70%);
+}
+.floating-box {
+  position: absolute; background: #fff; padding: 20px 22px; border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; z-index: 10;
+  max-width: 240px; min-width: 130px; min-height: 90px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  word-break: break-word; transition: opacity 0.3s ease;
+}
+.floating-box span { color: #111; font-size: 18px; font-weight: 500; line-height: 1.35; }
+#hint {
+  position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.08); font-size: 12px; font-family: monospace;
+  z-index: 30; text-align: center; transition: opacity 0.5s;
+}
+#hint.hidden { opacity: 0; }
+#info {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 40; font-size: 9px; color: rgba(255,255,255,0.1);
+  font-family: monospace; background: rgba(255,255,255,0.03); padding: 3px 10px; border-radius: 999px;
+}
+#ctrl-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+  padding: 8px 14px; z-index: 50; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s;
+}
+#ctrl-bar:hover { opacity: 1; }
+.ctrl-wrap {
+  display: flex; align-items: center; gap: 8px; max-width: 400px;
+}
+.ctrl-btn {
+  width: 26px; height: 26px; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.1); border-radius: 50%;
+  color: rgba(255,255,255,0.5); display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.ctrl-btn:hover { background: rgba(255,255,255,0.2); }
+.ctrl-btn svg { width: 10px; height: 10px; }
+.ctrl-t { font-size: 9px; font-family: monospace; color: rgba(255,255,255,0.25); }
+.ctrl-bar { flex: 1; height: 2px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; }
+.ctrl-fill { height: 100%; background: rgba(255,255,255,0.35); border-radius: 999px; }
+#yt { position: absolute; width: 0; height: 0; opacity: 0; }
+input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="layer"></div>
+  <div id="yt"></div>
+  <div id="info">earrings — malcolm todd</div>
+  <div id="hint">press <b>Space</b> to play</div>
+  <div id="ctrl-bar">
+    <div class="ctrl-wrap">
+      <button class="ctrl-btn" id="playBtn">
+        <svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+      </button>
+      <span class="ctrl-t" id="curT">0:00</span>
+      <div class="ctrl-bar"><div class="ctrl-fill" id="fill"></div></div>
+      <span class="ctrl-t" id="totT">2:31</span>
+      <label class="ctrl-btn" style="width:auto;padding:3px 8px;font-size:9px;border-radius:999px;cursor:pointer">
+        MP3<input type="file" accept="audio/*" id="fileInp" style="display:none">
+      </label>
+      <button class="ctrl-btn" id="fsBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var LRC = [
+  [0,"Her love is in your head"],[4.5,"You lost your earrings in her bed"],[9,"You couldn't tell her that you lost 'em"],[13.5,"Cause you're scared and not talking"],[18,"So you think of what to say"],[22,"Save it for another day"],[26,"You just never had the heart"],[30,"Now they drift further apart"],[34,"From you, oh"],[38,"From you, oh"],[42,"From you, oh"],[46,"From you, oh"],[50,"Her love is in your head"],[54.5,"You lost your earrings in her bed"],[59,"You couldn't tell her that you lost 'em"],[63.5,"Cause you're scared and not talking"],[68,"So you think of what to say"],[72,"Save it for another day"],[76,"You just never had the heart"],[80,"Now they drift further apart"],[84,"Extra, extra, read all about it"],[88,"Malcolm's in his feelings"],[92,"And he can't get out of it"],[96,"Extra, extra, read all about it"],[100,"Malcolm's in his feelings"],[104,"And he can't get out of it"],[108,"From you, oh"],[112,"From you, oh"],[116,"Extra, extra, read all about it"],[120,"Malcolm's in his feelings"],[124,"And he can't get out of it"],[128,"Can't get out of it"],[132,"Can't get out of it"],[137,"I hope you like my mix tape"]
+];
+
+var V=10, YT='a4tdS3IB294';
+var L=document.getElementById('layer'), H=document.getElementById('hint'), I=document.getElementById('playIco'),
+    C=document.getElementById('curT'), F=document.getElementById('fill'), P=false, T=0, Y=null, R=false, IV=null, S='youtube', M=new Map(), A=null;
+
+function fmt(s){return !isFinite(s)||s<0?'0:00':Math.floor(s/60)+':'+(Math.floor(s%60)+'').padStart(2,'0')}
+function gt(){if(Y&&R){try{return Y.getCurrentTime()}catch(e){}}return T}
+function by(p,v){return(1-p)*(v+120)-60}
+function gx(e){var w=window.innerWidth;for(var i=0;i<50;i++){var x=30+Math.random()*(w-270),o=true;for(var j=0;j<e.length;j++){if(Math.abs(x-e[j].x)<250){o=false;break}}if(o)return x}return 30+Math.random()*(w-270)}
+
+function up(){
+  if(!P)return;var t=gt();if(!t)return;
+  var a={},b=[];
+  for(var i=0;i<LRC.length;i++){var e=t-LRC[i][0];if(e>=0&&e<V){a[i]=true;b.push({id:i,txt:LRC[i][1],p:e/V})}}
+  var vh=window.innerHeight;
+  for(var e of M){if(!a[e[0]]){e[1].remove();M.delete(e[0])}}
+  var xv=[];for(var e of M)xv.push({x:parseFloat(e[1].dataset.bx||0)});
+  for(var j=0;j<b.length;j++){
+    var o=b[j],y=by(o.p,vh),op=o.p<0.05?o.p/0.05:o.p>0.80?Math.max(0,(1-o.p)/0.20):1;
+    if(M.has(o.id)){var el=M.get(o.id);el.style.top=y+'px';el.style.opacity=op}
+    else{
+      var x=gx(xv);xv.push({x:x});
+      var el=document.createElement('div');el.className='floating-box';el.dataset.bx=x;
+      el.style.left=x+'px';el.style.top=y+'px';el.style.opacity=0;
+      var s=document.createElement('span');s.textContent=o.txt;el.appendChild(s);
+      L.appendChild(el);M.set(o.id,el);
+      requestAnimationFrame(function(){el.style.opacity=op});
+    }
+  }
+  C.textContent=fmt(t);if(Y&&R){try{var d=Y.getDuration();if(d)F.style.width=(t/d*100)+'%'}catch(e){}}
+}
+
+function lp(){up();A=requestAnimationFrame(lp)}
+
+function tp(){
+  if(S==='youtube'){
+    if(!Y){ly();return}
+    if(P){Y.pauseVideo();P=false;I.innerHTML='<polygon points="6,4 20,12 6,20"/>';if(IV){clearInterval(IV);IV=null}}
+    else{Y.playVideo();P=true;I.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';H.classList.add('hidden');if(!IV){IV=setInterval(function(){T=gt()},100)}}
+  }
+}
+
+function ly(){
+  if(typeof YT!=='undefined'&&YT.Player){cy();return}
+  var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';
+  document.head.appendChild(t);window.onYouTubeIframeAPIReady=cy
+}
+
+function cy(){
+  Y=new YT.Player('yt',{videoId:YT,width:1,height:1,playerVars:{controls:0,autoplay:0,playsinline:1,modestbranding:1,rel:0},
+    events:{onReady:function(){R=true;Y.playVideo();P=true;I.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';H.classList.add('hidden');if(!IV){IV=setInterval(function(){T=gt()},100)}},
+      onStateChange:function(e){if(e.data===YT.PlayerState.PLAYING){P=true;I.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';H.classList.add('hidden')}else if(e.data===YT.PlayerState.PAUSED||e.data===YT.PlayerState.ENDED){P=false;I.innerHTML='<polygon points="6,4 20,12 6,20"/>'}},
+      onError:function(){document.getElementById('info').textContent='YT error — upload MP3'}}})
+}
+
+document.getElementById('fileInp').addEventListener('change',function(e){
+  var f=e.target.files[0];if(!f)return;
+  if(IV){clearInterval(IV);IV=null}
+  if(Y){try{Y.stopVideo()}catch(e){}}
+  S='file';var a=document.createElement('audio');
+  a.src=URL.createObjectURL(f);a.preload='auto';a.play();
+  P=true;I.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';H.classList.add('hidden');
+  document.getElementById('info').textContent=f.name.replace(/\.[^/.]+$/,'');
+  IV=setInterval(function(){T=a.currentTime;C.textContent=fmt(a.currentTime);if(a.duration)F.style.width=(a.currentTime/a.duration*100)+'%'},100);
+  a.addEventListener('ended',function(){P=false;I.innerHTML='<polygon points="6,4 20,12 6,20"/>';if(IV){clearInterval(IV);IV=null}})
+});
+
+document.getElementById('playBtn').onclick=tp;
+document.getElementById('fsBtn').onclick=function(){
+  if(!document.fullscreenElement){document.getElementById('app').requestFullscreen().catch(function(){})}else{document.exitFullscreen()}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key===' '){e.preventDefault();tp()}
+  if(e.key==='f'||e.key==='F')document.getElementById('fsBtn').click()
+});
+lp();
+</script>
+</body>
+</html>
