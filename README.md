@@ -60,7 +60,7 @@ The system uses a **Time-to-Lyric Map**. Each lyric is assigned a timestamp (in 
 
 ---
 
-## ?? Customization
+## Customization
 
 To change the lyrics or the song, edit the `LRC` array in the source files:
 
@@ -82,6 +82,6 @@ LRC = [
 
 ---
 
-## ?? License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
