@@ -1,4 +1,4 @@
-# ?? Floating Lyric Visualizer
+# Floating Lyric Visualizer
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -6,7 +6,7 @@ A minimalist, multi-platform synchronized lyric visualizer designed to create a 
 
 ---
 
-## ? Features
+## Features
 
 *   **Floating Aesthetics:** Lyrics drift upwards with dynamic opacity and random positioning.
 *   **YouTube & MP3 Support:** Sync with YouTube videos or load your own local MP3 files.
@@ -18,7 +18,7 @@ A minimalist, multi-platform synchronized lyric visualizer designed to create a 
 
 ---
 
-## ?? How It Works
+## How It Works
 
 The system uses a **Time-to-Lyric Map**. Each lyric is assigned a timestamp (in seconds). As the audio plays, the application:
 
@@ -29,7 +29,7 @@ The system uses a **Time-to-Lyric Map**. Each lyric is assigned a timestamp (in 
 
 ---
 
-## ?? Getting Started
+## Getting Started
 
 ### 1. Web Visualizer (`brat-lyrics.html`)
 *The quickest way to get started.*
